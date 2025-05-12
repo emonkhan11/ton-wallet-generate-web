@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>TON Wallet Generator</title>
+  </head>
+  <body>
+    <h1>TON Wallet Generator</h1>
+    <button id="generate-wallet">Generate Wallet</button>
+    <pre id="output">Waiting...</pre>
+
+    <script type="module">
+      import { mnemonicNew, mnemonicToWalletKey } from 'https://cdn.skypack.dev/ton-crypto';
+      
+      document.getElementById('generate-wallet').onclick = async () => {
+        try {
+          const mnemonic = await mnemonicNew();
+          const key = await mnemonicToWalletKey(mnemonic);
+          const wallet = {
+            mnemonic: mnemonic,
+            publicKey: Buffer.from(key.publicKey).toString('hex'),
+            privateKey: Buffer.from(key.secretKey).toString('hex'),
+          };
+          
+          document.getElementById('output').textContent = JSON.stringify(wallet, null, 2);
+        } catch (e) {
+          document.getElementById('output').textContent = 'Error: ' + e.message;
+        }
+      };
+    </script>
+  </body>
+</html>
