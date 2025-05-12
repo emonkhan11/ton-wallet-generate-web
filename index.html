@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TON Wallet Generator</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+      max-width: 700px;
+      margin: auto;
+      background: #f4f4f4;
+    }
+    pre {
+      background: #fff;
+      padding: 10px;
+      border-radius: 6px;
+      overflow-x: auto;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px;
+      background: #03a9f4;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0288d1;
+    }
+    #qr {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>TON Wallet Generator (Frontend)</h1>
+  <button onclick="generateWallet()">🔄 Generate New Wallet</button>
+
+  <h3>📜 Mnemonic:</h3>
+  <pre id="mnemonic">Generating...</pre>
+
+  <h3>🏦 Wallet Address:</h3>
+  <pre id="address"></pre>
+  <div id="qr"></div>
+
+  <h3>🔑 Public Key:</h3>
+  <pre id="pubkey"></pre>
+
+  <h3>🔐 Private Key (hex):</h3>
+  <pre id="privkey" style="filter: blur(6px);" onclick="this.style.filter='none'">(Click to reveal)</pre>
+
+  <!-- QRCode Generator -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.0/build/qrcode.min.js"></script>
+
+  <!-- TON JS SDK via Skypack CDN -->
+  <script type="module">
+    import { mnemonicNew, mnemonicToWalletKey } from 'https://cdn.skypack.dev/ton-crypto';
+    import { WalletContractV4 } from 'https://cdn.skypack.dev/ton';
+    import { Buffer } from 'https://cdn.skypack.dev/buffer';
+
+    window.Buffer = Buffer; // Needed for some cryptography
+
+    async function generateWallet() {
+      const mnemonic = await mnemonicNew();
+      const key = await mnemonicToWalletKey(mnemonic);
+      const wallet = WalletContractV4.create({ publicKey: key.publicKey, workchain: 0 });
+
+      document.getElementById('mnemonic').innerText = mnemonic.join(' ');
+      document.getElementById('address').innerText = wallet.address.toString();
+      document.getElementById('pubkey').innerText = Buffer.from(key.publicKey).toString('hex');
+      document.getElementById('privkey').innerText = Buffer.from(key.secretKey).toString('hex');
+      document.getElementById('privkey').style.filter = 'blur(6px)';
+
+      document.getElementById('qr').innerHTML = '';
+      QRCode.toCanvas(wallet.address.toString(), { width: 180 }, (err, canvas) => {
+        if (!err) document.getElementById('qr').appendChild(canvas);
+      });
+    }
+
+    window.generateWallet = generateWallet;
+    generateWallet();
+  </script>
+</body>
+</html>
